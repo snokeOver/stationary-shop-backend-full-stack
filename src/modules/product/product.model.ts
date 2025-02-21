@@ -13,6 +13,7 @@ import {
 } from "./product.interface";
 
 import { UpdateQuery } from "mongoose";
+import { AppError } from "../../utils/error.class";
 
 const productSchema = new Schema<
   IProduct,
@@ -36,7 +37,7 @@ const productSchema = new Schema<
 
     price: {
       type: Number,
-      required: [true, "Price is required"],
+      required: true,
       min: [0, "Price must be a positive number"],
     },
 
@@ -81,7 +82,7 @@ const productSchema = new Schema<
   // Adds `createdAt` and `updatedAt` fields automatically
   {
     timestamps: true,
-    // strict: "throw", // prevents extra fields and throw error
+    strict: "throw", // prevents extra fields and throw error
   }
 );
 
@@ -101,11 +102,11 @@ productSchema.pre("findOneAndUpdate", function (next) {
   const givenUpdateFields = (this.getUpdate() as UpdateQuery<IProduct>).$set;
 
   if (typeof givenUpdateFields !== "object" || givenUpdateFields === null) {
-    return next(new Error("Invalid update structure"));
+    return next(new AppError(400, "Invalid", "Invalid Update structure !"));
   }
 
   if (Object.keys(givenUpdateFields).length === 1)
-    return next(new Error("Nothing to update"));
+    return next(new AppError(400, "Invalid", "Nothing to update !"));
 
   const schemaKeys = Object.keys(productSchema.paths);
 
@@ -114,7 +115,13 @@ productSchema.pre("findOneAndUpdate", function (next) {
   );
 
   if (invalidFields.length > 0)
-    return next(new Error(`Invalid Fields: ${invalidFields.join(", ")}`));
+    return next(
+      new AppError(
+        400,
+        "Invalid",
+        `Invalid Fields: ${invalidFields.join(", ")}`
+      )
+    );
 
   next();
 });

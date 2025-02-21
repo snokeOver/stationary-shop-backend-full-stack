@@ -35,6 +35,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const product_model_1 = require("../product/product.model");
+const error_class_1 = require("../../utils/error.class");
 const orderSchema = new mongoose_1.Schema({
     email: {
         type: String,
@@ -82,14 +83,14 @@ orderSchema.pre("save", function () {
         });
         // Validate product existence
         if (!existingProduct)
-            throw new Error("Product not found in the database");
+            throw new error_class_1.AppError(404, "Not found", "Product not found in the database");
         const { name, quantity: stockQuantity, inStock } = existingProduct;
         //Validate product availability: When quantity is 0 or inStock is false
         if (stockQuantity === 0 || !inStock)
-            throw new Error(`${name} is out of Stock`);
+            throw new error_class_1.AppError(410, "Stock out", `${name} is out of Stock`);
         //Validate order quantity: When the order quantity is greater than the existing quantity
         if (this.quantity > stockQuantity)
-            throw new Error(`Insufficient stock for ${name}`);
+            throw new error_class_1.AppError(410, "Stock out", `Insufficient stock for ${name}`);
     });
 });
 //post-hook to update the quantity of the product
@@ -101,7 +102,7 @@ orderSchema.post("save", function () {
         });
         //When no product found
         if (!existingProduct)
-            throw new Error("Product not found in the DB");
+            throw new error_class_1.AppError(404, "Not Found", "Product not found in the DB");
         const updatedFild = {
             quantity: existingProduct.quantity - this.quantity,
             inStock: existingProduct.quantity > this.quantity,

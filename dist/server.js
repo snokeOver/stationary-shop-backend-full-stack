@@ -15,20 +15,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectToDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const _1 = require(".");
+const error_class_1 = require("./utils/error.class");
 const cached = { conn: null, promise: null };
 const connectToDB = () => __awaiter(void 0, void 0, void 0, function* () {
     if (cached.conn)
         return cached.conn;
-    if (!_1.mongoDB_Url)
-        throw new Error("MongoDB Url is missing in env file");
+    if (!_1.mongoUrl)
+        throw new error_class_1.AppError(500, "Missing Variable", "MongoDB Url is missing in env file");
     try {
         cached.promise = mongoose_1.default
-            .connect(_1.mongoDB_Url)
+            .connect(_1.mongoUrl)
             .then((mongoseInstace) => mongoseInstace);
     }
     catch (error) {
         cached.promise = null;
-        throw new Error(`Failed to connect to MongoDB with error:  ${error}`);
+        throw new error_class_1.AppError(503, "Database unavailable", "Failed to connect to MongoDB with error");
+        void error;
     }
     cached.conn = yield cached.promise;
     console.log("MongoDB connection successfull !");

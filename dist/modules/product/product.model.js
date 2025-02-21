@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductModel = void 0;
 const mongoose_1 = require("mongoose");
+const error_class_1 = require("../../utils/error.class");
 const productSchema = new mongoose_1.Schema({
     name: {
         type: String,
@@ -65,14 +66,14 @@ productSchema.query.notDeleted = function byName() {
 productSchema.pre("findOneAndUpdate", function (next) {
     const givenUpdateFields = this.getUpdate().$set;
     if (typeof givenUpdateFields !== "object" || givenUpdateFields === null) {
-        return next(new Error("Invalid update structure"));
+        return next(new error_class_1.AppError(400, "Invalid", "Invalid Update structure !"));
     }
     if (Object.keys(givenUpdateFields).length === 1)
-        return next(new Error("Nothing to update"));
+        return next(new error_class_1.AppError(400, "Invalid", "Nothing to update !"));
     const schemaKeys = Object.keys(productSchema.paths);
     const invalidFields = Object.keys(givenUpdateFields).filter((key) => !schemaKeys.includes(key));
     if (invalidFields.length > 0)
-        return next(new Error(`Invalid Fields: ${invalidFields.join(", ")}`));
+        return next(new error_class_1.AppError(400, "Invalid", `Invalid Fields: ${invalidFields.join(", ")}`));
     next();
 });
 exports.ProductModel = (0, mongoose_1.model)("products", productSchema);

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { mongoDB_Url } from ".";
+import { mongoUrl } from ".";
+import { AppError } from "./utils/error.class";
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -10,15 +11,25 @@ const cached: MongooseCache = { conn: null, promise: null };
 
 export const connectToDB = async () => {
   if (cached.conn) return cached.conn;
-  if (!mongoDB_Url) throw new Error("MongoDB Url is missing in env file");
+  if (!mongoUrl)
+    throw new AppError(
+      500,
+      "Missing Variable",
+      "MongoDB Url is missing in env file"
+    );
 
   try {
     cached.promise = mongoose
-      .connect(mongoDB_Url)
+      .connect(mongoUrl)
       .then((mongoseInstace) => mongoseInstace);
   } catch (error) {
     cached.promise = null;
-    throw new Error(`Failed to connect to MongoDB with error:  ${error}`);
+    throw new AppError(
+      503,
+      "Database unavailable",
+      "Failed to connect to MongoDB with error"
+    );
+    void error;
   }
 
   cached.conn = await cached.promise;

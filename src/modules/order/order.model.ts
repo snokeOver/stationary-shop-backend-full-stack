@@ -1,41 +1,56 @@
-import mongoose, { model, Schema } from "mongoose";
+import { model, Schema } from "mongoose";
 import { IOrder } from "./order.interface";
 import { ProductModel } from "../product/product.model";
+import { AppError } from "../../utils/error.class";
 
 const orderSchema = new Schema<IOrder>(
   {
     email: {
       type: String,
-      required: [true, "Customer email is required"],
+      required: true,
       trim: true,
       lowercase: true,
-      validate: {
-        validator: (value) =>
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(value),
-        message: "Invalid email format",
-      },
     },
 
-    product: {
-      type: Schema.Types.ObjectId,
-      ref: "products",
-      trim: true,
-      required: true,
-      validate: {
-        validator: mongoose.Types.ObjectId.isValid,
-        message: "Invalid product ID",
+    mainOrder: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "products",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: [1, "Quantity should be at least 1"],
+        },
+        price: {
+          type: Number,
+          required: true,
+          validate: {
+            validator: (value: number) => value > 0,
+            message: "Invalid price",
+          },
+        },
       },
-    },
+    ],
 
-    quantity: {
-      type: Number,
-      required: [true, "Product quantity is required"],
-      min: [1, "Quantity should be at least 1"],
+    status: {
+      type: String,
+      enum: [
+        "Drafted",
+        "Pending",
+        "Shipping",
+        "Received",
+        "Rejected",
+        "Deleted",
+      ],
+      default: "Drafted",
     },
 
     totalPrice: {
       type: Number,
-      required: [true, "Total price is required"],
+      required: true,
       validate: {
         validator: (value: number) => value > 0,
         message: "Invalid Total price",
@@ -45,55 +60,57 @@ const orderSchema = new Schema<IOrder>(
 
   {
     timestamps: true,
-    // strict: "throw", // prevents extra fields and throw error
+    strict: "throw", // prevents extra fields and throw error
   }
 );
 
 //Pre-hook to validate some aspects before creating a order
 orderSchema.pre("save", async function () {
-  const existingProduct = await ProductModel.findOne({
-    _id: this.product,
-    isDeleted: false,
-  });
+  for (const item of this.mainOrder) {
+    const existingProduct = await ProductModel.findOne({
+      _id: item.product,
+      isDeleted: false,
+    });
 
-  // Validate product existence
-  if (!existingProduct) throw new Error("Product not found in the database");
+    // Validate product existence
+    if (!existingProduct)
+      throw new AppError(404, "Not Found", "Product not found in the database");
 
-  const { name, quantity: stockQuantity, inStock } = existingProduct;
+    const { name, quantity: stockQuantity, inStock } = existingProduct;
 
-  //Validate product availability: When quantity is 0 or inStock is false
-  if (stockQuantity === 0 || !inStock)
-    throw new Error(`${name} is out of Stock`);
+    // Validate product availability
+    if (stockQuantity === 0 || !inStock)
+      throw new AppError(410, "Stock Out", `${name} is out of stock`);
 
-  //Validate order quantity: When the order quantity is greater than the existing quantity
-  if (this.quantity > stockQuantity)
-    throw new Error(`Insufficient stock for ${name}`);
+    // Validate order quantity
+    if (item.quantity > stockQuantity)
+      throw new AppError(410, "Stock Out", `Insufficient stock for ${name}`);
+  }
 });
 
 //post-hook to update the quantity of the product
 orderSchema.post("save", async function () {
-  const existingProduct = await ProductModel.findOne({
-    _id: this.product,
-    isDeleted: false,
-  });
+  for (const item of this.mainOrder) {
+    const existingProduct = await ProductModel.findOne({
+      _id: item.product,
+      isDeleted: false,
+    });
 
-  //When no product found
-  if (!existingProduct) throw new Error("Product not found in the DB");
+    // When no product is found
+    if (!existingProduct)
+      throw new AppError(404, "Not Found", "Product not found in the database");
 
-  const updatedFild = {
-    quantity: existingProduct.quantity - this.quantity,
-    inStock: existingProduct.quantity > this.quantity,
-  };
+    const updatedFields = {
+      quantity: existingProduct.quantity - item.quantity,
+      inStock: existingProduct.quantity > item.quantity,
+    };
 
-  await ProductModel.findByIdAndUpdate(
-    this.product,
-    {
-      $set: updatedFild,
-    },
-    {
-      new: true,
-    }
-  );
+    await ProductModel.findByIdAndUpdate(
+      item.product,
+      { $set: updatedFields },
+      { new: true }
+    );
+  }
 });
 
 export const OrderModel = model<IOrder>("orders", orderSchema);

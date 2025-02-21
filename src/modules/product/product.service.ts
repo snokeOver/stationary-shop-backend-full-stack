@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../errorHandler";
+import { AppError } from "../../utils/error.class";
 import { IProduct } from "./product.interface";
 import { ProductModel } from "./product.model";
 
@@ -28,7 +28,8 @@ export const getAllProductsDB = async (searchTerm: string) => {
     .select("-isDeleted -__v");
 
   // console.log(query.getQuery());
-  if (result.length < 1) throw new NotFoundError("Resource not found");
+  if (result.length < 1)
+    throw new AppError(404, "Not found", "Resource not found");
   return result;
 };
 
@@ -38,7 +39,8 @@ export const getAProductDB = async (productId: string) => {
     .notDeleted()
     .select("-isDeleted -__v");
 
-  if (result.length < 1) throw new NotFoundError("Resource not found");
+  if (result.length < 1)
+    throw new AppError(404, "Not found", "Resource not found");
 
   return result;
 };
@@ -54,7 +56,7 @@ export const updateAProductDB = async (
     { runValidators: true, new: true }
   ).select("-isDeleted -__v");
 
-  if (!result) throw new NotFoundError("Resource not found");
+  if (!result) throw new AppError(404, "Not found", "Resource not found");
 
   return result;
 };
@@ -68,7 +70,7 @@ export const deleteAProductDB = async (productId: string) => {
     { runValidators: true, new: true }
   ).select("-isDeleted -__v");
 
-  if (!result) throw new NotFoundError("Resource not found");
+  if (!result) throw new AppError(404, "Not found", "Resource not found");
 
   return {};
 };
