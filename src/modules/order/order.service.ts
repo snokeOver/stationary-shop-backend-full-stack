@@ -1,5 +1,30 @@
+import { stripe_secret } from "../..";
 import { IOrder } from "./order.interface";
 import { OrderModel } from "./order.model";
+import Stripe from "stripe";
+
+//Create a payment Intent for stripe payment
+export const createStripePaymentIntent = async (amountToPay: number) => {
+  const amount = Math.ceil(amountToPay * 100);
+  const stripe = new Stripe(stripe_secret!);
+
+  if (amount <= 0) {
+    return {
+      message: "Filed to create Payment Intent!",
+    };
+  }
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+
+  return {
+    message: "Payment Intent created successfully!",
+    clientSecret: paymentIntent.client_secret,
+  };
+};
 
 //Create a order and save to MongoDB
 export const createAOrderDB = async (order: IOrder) => {

@@ -20,7 +20,11 @@ export const loginUserFromDB = async (payload: ILoginUser) => {
   const foundUser = await UserModel.isUserExist(payload.email);
 
   if (!foundUser)
-    throw new AppError(404, "Not Exist", "This user doesn't exist !");
+    throw new AppError(
+      404,
+      "Either email or password is wrong",
+      "This user doesn't exist !"
+    );
 
   if (foundUser.status === "InActive")
     throw new AppError(403, "Forbidden", "This user is In-actice !");
@@ -29,9 +33,14 @@ export const loginUserFromDB = async (payload: ILoginUser) => {
   if (
     !(await UserModel.isPasswordMatched(payload.password, foundUser.password))
   )
-    throw new AppError(403, "Forbidden", "Passowrd Not matched !");
+    throw new AppError(
+      403,
+      "Either email or password is wrong",
+      "Either email or password is wrong"
+    );
 
   const jwtPayload = {
+    name: foundUser.name,
     email: foundUser.email,
     role: foundUser.role,
   };
@@ -114,6 +123,7 @@ export const getTokenByRefreshTokenFromBackend = async (token: string) => {
     throw new AppError(403, "Forbidden", "This user is In-actice !");
 
   const jwtPayload = {
+    name: foundUser.name,
     email: foundUser.email,
     role: foundUser.role,
   };

@@ -35,6 +35,12 @@ const productSchema = new Schema<
       trim: true,
     },
 
+    imageUrl: {
+      type: String,
+      required: [true, "Product Image is required"],
+      trim: true,
+    },
+
     price: {
       type: Number,
       required: true,

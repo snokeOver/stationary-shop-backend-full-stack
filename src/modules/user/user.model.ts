@@ -62,7 +62,11 @@ userSchema.pre("save", async function () {
   });
 
   if (isUserExist)
-    throw new AppError(409, "Duplicate Email", "This User is already exist !");
+    throw new AppError(
+      409,
+      "This User is already exist",
+      "This User is already exist !"
+    );
 
   this.password = await bcrypt.hash(this.password, Number(saltRound));
 });

@@ -12,6 +12,7 @@ const categoryEnum = z.enum([
 export const productValidation = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
   brand: z.string().min(1, { message: "Brand name is required" }),
+  imageUrl: z.string().min(1, { message: "Product Image is required" }),
   price: z.number().positive({ message: "Price must be a positive number" }),
   category: categoryEnum,
   description: z

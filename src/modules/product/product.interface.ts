@@ -9,6 +9,7 @@ export type TCategory =
 
 export interface IProduct {
   name: string;
+  imageUrl: string;
   brand: string;
   price: number;
   category: TCategory;

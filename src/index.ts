@@ -19,6 +19,7 @@ export const jwt_access_secret = process.env.JWT_SECRET;
 export const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET;
 export const jwt_access_expire = process.env.JWT_ACCESS_EXPIRES_IN;
 export const jwt_refresh_expire = process.env.JWT_REFRESH_EXPIRES_IN;
+export const stripe_secret = process.env.STRIPE_SECRET;
 
 //Connect Mongodb
 connectToDB();

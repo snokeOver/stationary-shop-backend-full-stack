@@ -9,13 +9,23 @@ export type TOrderStatuse =
   | "Deleted";
 
 export interface IOrder {
-  email: string;
-  mainOrder: {
-    product: Types.ObjectId;
-    quantity: number;
+  userInfo: {
+    address: string;
+    email: string;
+    name: string;
+    phone: string;
+  };
+  orderItems: {
+    availableQuantity: number;
+    imageUrl: string;
+    name: string;
+    _id: Types.ObjectId;
     price: number;
+    purchaseQuantity: number;
   }[];
+
   status: TOrderStatuse;
-  totalPrice: number;
+  paidAmount: number;
+  txId: string;
   __v?: number;
 }
