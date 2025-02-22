@@ -26,6 +26,24 @@ export class QueryBuilder<T> {
 
     excludeFields.forEach((el) => delete copiedQuery[el]);
 
+    // Handle minPrice and maxPrice
+    if (copiedQuery.minPrice || copiedQuery.maxPrice) {
+      // Build the price filter object
+      const priceFilter: { $gte?: number; $lte?: number } = {};
+      if (copiedQuery.minPrice) {
+        priceFilter.$gte = Number(copiedQuery.minPrice);
+      }
+      if (copiedQuery.maxPrice) {
+        priceFilter.$lte = Number(copiedQuery.maxPrice);
+      }
+      // Add price filter to the query
+      copiedQuery.price = priceFilter;
+
+      // Remove minPrice and maxPrice from the copied query
+      delete copiedQuery.minPrice;
+      delete copiedQuery.maxPrice;
+    }
+
     this.queryModel = this.queryModel.find(copiedQuery);
     return this;
   }
@@ -38,7 +56,7 @@ export class QueryBuilder<T> {
   }
 
   paginate() {
-    const limitQuery = Number(this?.query?.limit) || 10;
+    const limitQuery = Number(this?.query?.limit) || 6;
     const pageQuery = Number(this?.query?.page) || 1;
     const skipQuery = (pageQuery - 1) * limitQuery;
 

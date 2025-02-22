@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import {
+  countTotalProduct,
   createProductDB,
   deleteAProductDB,
   getAllProductsDB,
@@ -34,13 +35,13 @@ export const getAllProducts = async (
   next: NextFunction
 ) => {
   try {
-    const { searchTerm } = req.query;
-    const result = await getAllProductsDB(searchTerm as string);
-
+    const result = await getAllProductsDB(req.query);
+    const totalProduct = await countTotalProduct();
     res.status(200).send({
       message: "Products retrieved successfully",
       status: true,
       data: result,
+      totalProduct,
     });
   } catch (error) {
     next(error);

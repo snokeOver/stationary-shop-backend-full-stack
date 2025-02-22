@@ -1,4 +1,6 @@
+import { QueryBuilder } from "../../builder/QueryBuilder";
 import { AppError } from "../../utils/error.class";
+import { productSearchFields } from "./product.constant";
 import { IProduct } from "./product.interface";
 import { ProductModel } from "./product.model";
 
@@ -11,25 +13,23 @@ export const createProductDB = async (product: IProduct) => {
   return restResult;
 };
 
+//Get totalProduct
+export const countTotalProduct = async () => {
+  const totalProduct = await ProductModel.countDocuments();
+  return totalProduct;
+};
+
 //Get all products from the database
-export const getAllProductsDB = async (searchTerm: string) => {
-  const searchQuery: Record<string, unknown> = searchTerm
-    ? {
-        $or: [
-          { category: { $regex: searchTerm, $options: "i" } },
-          { name: { $regex: searchTerm, $options: "i" } },
-          { brand: { $regex: searchTerm, $options: "i" } },
-        ],
-      }
-    : {};
+export const getAllProductsDB = async (query: Record<string, unknown>) => {
+  const productQuery = new QueryBuilder(ProductModel.find(), query)
+    .search(productSearchFields)
+    .filter()
+    .sort()
+    .paginate()
+    .selectFields();
 
-  const result = await ProductModel.find(searchQuery)
-    .notDeleted()
-    .select("-isDeleted -__v");
-
-  // console.log(query.getQuery());
-  if (result.length < 1)
-    throw new AppError(404, "Not found", "Resource not found");
+  const result = await productQuery.queryModel;
+  // console.log(result);
   return result;
 };
 

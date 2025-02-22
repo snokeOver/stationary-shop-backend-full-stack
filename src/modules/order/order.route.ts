@@ -11,7 +11,12 @@ import { auth } from "../../middlewares/auth";
 const orderRoute = express.Router();
 
 orderRoute.post("/payment-intent", auth("User"), createPaymentIntent);
-orderRoute.post("/", validateRequest(orderValidation), createAOrder);
-orderRoute.get("/revenue", calculateRevenue);
+orderRoute.post(
+  "/",
+  validateRequest(orderValidation),
+  auth("User"),
+  createAOrder
+);
+orderRoute.get("/revenue", auth("Admin"), calculateRevenue);
 
 export default orderRoute;
