@@ -27,7 +27,11 @@ export const loginUserFromDB = async (payload: ILoginUser) => {
     );
 
   if (foundUser.status === "InActive")
-    throw new AppError(403, "Forbidden", "This user is In-actice !");
+    throw new AppError(
+      403,
+      "Security department deactivated your account",
+      "This user is In-actice !"
+    );
 
   // //password check
   if (

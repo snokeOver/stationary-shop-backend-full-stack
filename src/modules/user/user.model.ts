@@ -26,8 +26,13 @@ const userSchema = new Schema<IUser, IUserModel>(
     address: {
       type: String,
       required: false,
+      default: "",
     },
-
+    phone: {
+      type: String,
+      required: false,
+      default: "",
+    },
     role: {
       type: String,
       enum: {
