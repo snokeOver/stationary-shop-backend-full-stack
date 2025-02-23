@@ -20,7 +20,7 @@ productRouter.post(
 );
 productRouter.get("/", getAllProducts);
 productRouter.get("/:productId", getAProduct);
-productRouter.put("/:productId", auth("Admin"), updateAProduct);
+productRouter.patch("/:productId", auth("Admin"), updateAProduct);
 productRouter.delete("/:productId", auth("Admin"), deleteAProduct);
 
 export default productRouter;

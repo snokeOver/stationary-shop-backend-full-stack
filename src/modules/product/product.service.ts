@@ -15,7 +15,7 @@ export const createProductDB = async (product: IProduct) => {
 
 //Get totalProduct
 export const countTotalProduct = async () => {
-  const totalProduct = await ProductModel.countDocuments();
+  const totalProduct = await ProductModel.countDocuments({ isDeleted: false });
   return totalProduct;
 };
 
@@ -63,6 +63,7 @@ export const updateAProductDB = async (
 
 //Delete a single product from the database
 export const deleteAProductDB = async (productId: string) => {
+  // console.log(productId);
   const deleteObj = { isDeleted: true };
   const result = await ProductModel.findOneAndUpdate(
     { _id: productId, isDeleted: false },
