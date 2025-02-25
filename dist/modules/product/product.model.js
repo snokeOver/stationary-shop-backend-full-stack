@@ -15,9 +15,14 @@ const productSchema = new mongoose_1.Schema({
         required: [true, "Brand name is required"],
         trim: true,
     },
+    imageUrl: {
+        type: String,
+        required: [true, "Product Image is required"],
+        trim: true,
+    },
     price: {
         type: Number,
-        required: [true, "Price is required"],
+        required: true,
         min: [0, "Price must be a positive number"],
     },
     category: {
@@ -56,7 +61,7 @@ const productSchema = new mongoose_1.Schema({
 // Adds `createdAt` and `updatedAt` fields automatically
 {
     timestamps: true,
-    // strict: "throw", // prevents extra fields and throw error
+    strict: "throw", // prevents extra fields and throw error
 });
 //Custom querry to get only the non-deleted product
 productSchema.query.notDeleted = function byName() {

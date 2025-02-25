@@ -1,44 +1,90 @@
-# 🛒 Stationery Shop API
+## 🛒 Snoke Stationery Shop Backend
 
-This project is a TypeScript-based Express application designed to manage a Stationery Shop's inventory and orders. It integrates MongoDB using Mongoose for database operations and ensures data integrity through schema validation.
+This project is a **TypeScript-based Express.js** application designed to manage a **Stationery Shop's inventory, user authentication, role-based access, orders, and payment processing**. It integrates **MongoDB** using **Mongoose** for database operations and ensures data integrity through **schema validation** and **JWT authentication**. The application also includes **Stripe** for secure payment processing.
+
+---
 
 ## 🚀 Features
 
-1. **Stationery Product Management**:
+### 1. **Stationery Product Management**
 
-   - Create, retrieve, update, and delete products.
-   - Query products by name, brand, or category.
+- **Admin-Only Access**: Create, retrieve, update, and delete products.
+- **Advanced Querying**: Search products by name, brand, or category.
+- **Real-Time Inventory Updates**: Automatically update stock levels when orders are placed.
 
-2. **Order Management**:
+### 2. **Order Management**
 
-   - Place orders and manage inventory in real-time.
-   - Automatic inventory updates upon order placement.
-   - Prevent orders when stock is insufficient.
+- **Place Orders**: Customers can place orders for available products.
+- **Inventory Checks**: Prevent orders when stock is insufficient.
+- **Revenue Tracking**: Calculate total revenue from all orders.
 
-3. **Revenue Calculation**:
-   - Aggregate total revenue from all orders placed.
-4. **Data Validation**:
-   - Enforced using Mongoose schema validation.
-5. **Error Handling**:
+### 3. **Payment Processing**
 
-   - Generic error responses with clear messages.
-   - Validation for input data and inventory checks.
+- **Stripe Integration**: Secure payment processing for orders.
+- **Payment Confirmation**: Automatically confirm payments and update order status.
 
-6. **API Structure**:
-   - Consistent and RESTful API endpoints.
-   - Comprehensive response formats for success and failure.
+### 4. **User Authentication & Role-Based Access**
+
+- **JWT Authentication**: Secure user authentication with JSON Web Tokens.
+- **Role-Based Access Control**: Differentiate between admin and customer roles.
+- **Refresh Tokens**: Implemented for secure token refreshing.
+- **User Registration & Login**: Secure user registration and login flow.
+
+### 5. **User Management**
+
+- **Admin Controls**: Block or unblock users.
+- **User Profile Management**: Users can update their profiles.
+
+### 6. **Data Validation**
+
+- **Mongoose Schema Validation**: Ensure data integrity at the database level.
+- **Input Validation**: Validate user inputs before processing.
+
+### 7. **Error Handling**
+
+- **Generic Error Responses**: Clear and consistent error messages.
+- **Custom Error Middleware**: Centralized error handling for all routes.
+
+---
 
 ## 🛠️ Technologies Used
 
-- **Backend Framework**: Express.js
-- **Programming Language**: TypeScript
-- **Database**: MongoDB
-- **ORM**: Mongoose
-- **Validation**: Mongoose Schema Validation
+- **Backend Framework**: [Express.js](https://expressjs.com/)
+- **Programming Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [MongoDB](https://www.mongodb.com/)
+- **ORM**: [Mongoose](https://mongoosejs.com/)
+- **Authentication**: [JSON Web Tokens (JWT)](https://jwt.io/)
+- **Payment Processing**: [Stripe](https://stripe.com/)
+- **Environment Management**: [dotenv](https://www.npmjs.com/package/dotenv)
+- **API Testing**: [Postman](https://www.postman.com/)
+
+---
 
 ## 📂 Project Structure
 
-![Folder Structure](/assets/structure.PNG)
+plaintext
+
+Copy
+
+stationary-shop/
+├── src/
+│ ├── app.ts # Express application setup
+│ ├── server.ts # Server initialization
+│ ├── config/ # Configuration files (e.g., database, environment)
+│ ├── controllers/ # Route controllers
+│ ├── interfaces/ # TypeScript interfaces
+│ ├── middleware/ # Custom middleware (e.g., authentication, error handling)
+│ ├── models/ # Mongoose models
+│ ├── routes/ # API routes
+│ ├── services/ # Business logic
+│ ├── utils/ # Utility functions (e.g., token generation)
+├── .env.example # Environment variables template
+├── .gitignore # Files and directories to ignore in Git
+├── package.json # Project dependencies and scripts
+├── tsconfig.json # TypeScript configuration
+└── README.md # Project documentation
+
+---
 
 ## 🧩 Models Overview
 
@@ -62,6 +108,19 @@ This project is a TypeScript-based Express application designed to manage a Stat
 | `product`    | `ObjectId` | The product ordered (referencing Product). |
 | `quantity`   | `number`   | Quantity of the product ordered.           |
 | `totalPrice` | `number`   | Total price of the order.                  |
+| `status`     | `string`   | Order status (e.g., pending, completed).   |
+
+### **User Model**
+
+| Field       | Type      | Description                           |
+| ----------- | --------- | ------------------------------------- |
+| `name`      | `string`  | User's full name.                     |
+| `email`     | `string`  | User's email address.                 |
+| `password`  | `string`  | Hashed password.                      |
+| `role`      | `enum`    | User role: `admin` or `customer`.     |
+| `isBlocked` | `boolean` | Whether the user is blocked by admin. |
+
+---
 
 ## 📋 API Endpoints
 
@@ -82,69 +141,122 @@ This project is a TypeScript-based Express application designed to manage a Stat
 | POST   | `/api/orders`         | Place a new order.                   |
 | GET    | `/api/orders/revenue` | Calculate total revenue from orders. |
 
+### **Payments**
+
+| Method | Endpoint        | Description                 |
+| ------ | --------------- | --------------------------- |
+| POST   | `/api/payments` | Process payment via Stripe. |
+
+### **Users**
+
+| Method | Endpoint              | Description                           |
+| ------ | --------------------- | ------------------------------------- |
+| POST   | `/api/users/register` | Register a new user.                  |
+| POST   | `/api/users/login`    | Log in a user.                        |
+| GET    | `/api/users`          | Retrieve all users (admin-only).      |
+| PUT    | `/api/users/:userId`  | Update user details (admin-only).     |
+| DELETE | `/api/users/:userId`  | Block or unblock a user (admin-only). |
+
+---
+
 ## 🛡️ Error Handling
 
 - **Validation Errors**: Detailed messages for invalid inputs.
 - **Resource Not Found**: 404 errors for missing products or orders.
 - **Insufficient Stock**: Prevents orders exceeding available inventory.
+- **Payment Failures**: Handle Stripe payment errors gracefully.
 
 Example Error Response:
 
-```js
+json
+
+Copy
+
 {
-	"message": "Validation failed",
-	"success": false,
-	"error": { ... },
-	"stack": "Error trace..."
+"message": "Payment failed",
+"success": false,
+"error": {
+"code": "card_declined",
+"message": "Your card was declined."
+},
+"stack": "Error trace..."
 }
-```
+
+---
 
 ## 🛑 Prerequisites
 
-- Node.js (v16+)
-- MongoDB (Atlas or Local)
-- npm (or yarn)
+- **Node.js** (v16+)
+- **MongoDB** (Atlas or Local)
+- **npm** (or yarn)
+- **Stripe Account**: For payment processing.
+
+---
 
 ## 🔧 Setup
 
-1. Clone the repository:
+1. **Clone the repository**:
 
-   `git clone https://github.com/snokeOver/stationary-shop.git`
+   bash
 
-   `cd stationary-shop`
+   Copy
 
-2. Install dependencies:
+   git clone https://github.com/snokeOver/stationary-shop-backend-full-stack
+   cd stationary-shop
 
-   `npm install`
+2. **Install dependencies**:
 
-3. Set up environment variables:
+   bash
 
-   Create a `.env` file with the following values:
+   Copy
 
-   `SERVER_PORT=5000`
+   npm install
 
-   `MONGODB_URL=your_mongodb_connection_string`
+3. **Set up environment variables**:
 
-   `NODE_ENV=development`
+   Create a `.env` file with the following values:
 
-4. Start the application:
+   plaintext
 
-   `npm run dev`
+   Copy
 
-5. Test the API using tools like `Postman` or `cURL`.
+   SERVER_PORT=3500
+   MONGODB_URL=your_mongodb_connection_string
+   NODE_ENV=development
+   JWT_SECRET=your_jwt_secret_key
+   JWT_EXPIRES_IN=1d
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+
+4. **Start the application**:
+
+   bash
+
+   Copy
+
+   npm run dev
+
+5. **Test the API** using tools like [Postman](https://www.postman.com/) or `cURL`.
+
+---
 
 ## 🖥️ Deployment
 
-- Deployed Link: [Live Demo](https://stationary-shop-snoke.vercel.app/)
-- GitHub Repository: [Stationery Shop](https://github.com/snokeOver/stationary-shop)
+- **Deployed Link**: [Live Demo](https://snoke-stationary.vercel.app/)
+- **GitHub Repository**: [Stationery Shop](https://github.com/snokeOver/stationary-shop-backend-full-stack)
+
+---
 
 ## 🎥 Video Walkthrough
 
-Watch the API walkthrough: [Video Explanation](https://drive.google.com/file/d/1zrUaz9p_1wLizJyeCNaxxy9f-x3_VcWU/view)
+Watch the API walkthrough: [Video Explanation](https://drive.google.com/file/d/1bPaPIERabhza6jswb9MH-cmbQB2Nj2sW/view?usp=drive_link)
+
+---
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the **Issues** page or submit a pull request.
+Contributions, issues, and feature requests are welcome! Feel free to check the **Issues** page or submit a pull request.
+
+---
 
 ## 👨‍💻 Author
 
@@ -152,5 +264,29 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ###### MERN, TypeScript, Next.js, Node.js, MongoDB | Crafting user-friendly, secure, scalable Web Apps | Passionate about Software Engineering
 
-- GitHub: [@snokeOver](https://github.com/snokeOver)
-- LinkedIn: [Shubhankar Halder](https://www.linkedin.com/in/shubhankar-halder/)
+- **GitHub**: [@snokeOver](https://github.com/snokeOver)
+- **LinkedIn**: [Shubhankar Halder](https://www.linkedin.com/in/shubhankar-halder/)
+
+---
+
+### Key Additions:
+
+1. **Stripe Integration**:
+
+   - Added details about **Stripe payment processing** in the **Features** and **API Endpoints** sections.
+
+2. **User Management**:
+
+   - Added details about **user registration, login, and admin controls** (block/unblock users).
+
+3. **Order Management**:
+
+   - Added **order status** to the **Order Model**.
+
+4. **Error Handling**:
+
+   - Added an example error response for **payment failures**.
+
+5. **Environment Variables**:
+
+   - Added `STRIPE_SECRET_KEY` to the `.env` setup.

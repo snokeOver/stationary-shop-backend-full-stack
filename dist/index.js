@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.jwt_refresh_expire = exports.jwt_access_expire = exports.jwt_refresh_secret = exports.jwt_access_secret = exports.defPass = exports.saltRound = exports.serverPort = exports.nodeEnv = exports.mongoUrl = void 0;
+exports.stripe_secret = exports.jwt_refresh_expire = exports.jwt_access_expire = exports.jwt_refresh_secret = exports.jwt_access_secret = exports.defPass = exports.saltRound = exports.serverPort = exports.nodeEnv = exports.mongoUrl = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -23,6 +23,7 @@ exports.jwt_access_secret = process.env.JWT_SECRET;
 exports.jwt_refresh_secret = process.env.JWT_REFRESH_SECRET;
 exports.jwt_access_expire = process.env.JWT_ACCESS_EXPIRES_IN;
 exports.jwt_refresh_expire = process.env.JWT_REFRESH_EXPIRES_IN;
+exports.stripe_secret = process.env.STRIPE_SECRET;
 //Connect Mongodb
 (0, server_1.connectToDB)();
 //Initialize app
@@ -30,11 +31,17 @@ const app = (0, express_1.default)();
 //Primary middlewares
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-app.use((0, cors_1.default)({ origin: ["http://localhost:5173"], credentials: true }));
+app.use((0, cors_1.default)({
+    origin: [
+        "https://snoke-stationary-front.vercel.app",
+        "http://localhost:5173",
+    ],
+    credentials: true,
+}));
 //Applicatin route
 app.use("/api", routes_1.default);
 app.get("/", (req, res) => {
-    res.send("Hello from University Management");
+    res.send("Hello from Snoke stationary shops");
     // Promise.reject();
 });
 const server = app.listen(exports.serverPort, () => {

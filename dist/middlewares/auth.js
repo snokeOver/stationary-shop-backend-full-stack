@@ -26,16 +26,13 @@ const auth = (...userRole) => {
             throw new error_class_1.AppError(401, "UnAuthorized", "You are not authorized !");
         //Check if token is valid
         const decoded = jsonwebtoken_1.default.verify(token, __1.jwt_access_secret);
-        const { role, id, iat } = decoded;
+        const { role, email } = decoded;
         //Check if the user has permission
-        const foundUser = yield user_model_1.UserModel.isUserExist(id);
+        const foundUser = yield user_model_1.UserModel.isUserExist(email);
         if (!foundUser)
             throw new error_class_1.AppError(404, "Not Exist", "This user doesn't exist !");
         if (foundUser.status === "InActive")
             throw new error_class_1.AppError(403, "Forbidden", "This user is In-actice !");
-        if (foundUser.passwordChangedAt &&
-            user_model_1.UserModel.isJWTValidYet(foundUser.passwordChangedAt, iat))
-            throw new error_class_1.AppError(401, "UnAuthorized", "You are not authorized !");
         if (userRole && !userRole.includes(role))
             throw new error_class_1.AppError(401, "UnAuthorized", "You are not authorized !");
         req.user = decoded;

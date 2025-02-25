@@ -9,8 +9,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateRevenue = exports.createAOrder = void 0;
+exports.getSingleOrder = exports.getAllOrders = exports.calculateRevenue = exports.createAOrder = exports.createPaymentIntent = void 0;
 const order_service_1 = require("./order.service");
+//Controller to create payment intent for a single order
+const createPaymentIntent = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, order_service_1.createStripePaymentIntent)(req.body.amount);
+        res.status(200).send({
+            message: "Payment Intent created successfully",
+            status: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.createPaymentIntent = createPaymentIntent;
 //Controller to handle the create a single order
 const createAOrder = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -42,3 +57,40 @@ const calculateRevenue = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.calculateRevenue = calculateRevenue;
+// Control request and response to get all orders
+const getAllOrders = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, order_service_1.getAllOrdersFromDB)();
+        res.status(200).send({
+            message: "All Orders retrieved successfully",
+            status: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.getAllOrders = getAllOrders;
+//Get single Order
+const getSingleOrder = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, order_service_1.getSingleOrderFromDB)(req.params.orderId);
+        if (!result) {
+            res.status(404).send({
+                message: "Order not found",
+                status: false,
+            });
+            return;
+        }
+        res.status(200).send({
+            message: "Order retrieved successfully",
+            status: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.getSingleOrder = getSingleOrder;

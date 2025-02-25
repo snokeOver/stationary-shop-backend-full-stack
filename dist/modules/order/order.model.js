@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -33,85 +10,143 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderModel = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
+const mongoose_1 = require("mongoose");
 const product_model_1 = require("../product/product.model");
 const error_class_1 = require("../../utils/error.class");
 const orderSchema = new mongoose_1.Schema({
-    email: {
-        type: String,
-        required: [true, "Customer email is required"],
-        trim: true,
-        lowercase: true,
-        validate: {
-            validator: (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(value),
-            message: "Invalid email format",
+    userInfo: {
+        address: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
+        },
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        phone: {
+            type: String,
+            required: true,
+            trim: true,
         },
     },
-    product: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "products",
-        trim: true,
+    orderItems: [
+        {
+            availableQuantity: {
+                type: Number,
+                required: true,
+                min: [0, "Available quantity must be non-negative"],
+            },
+            imageUrl: {
+                type: String,
+                required: true,
+            },
+            name: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+            _id: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                required: true,
+                ref: "products",
+            },
+            price: {
+                type: Number,
+                required: true,
+                validate: {
+                    validator: (value) => value > 0,
+                    message: "Price must be a positive number",
+                },
+            },
+            purchaseQuantity: {
+                type: Number,
+                required: true,
+                min: [1, "Purchase quantity must be at least 1"],
+            },
+        },
+    ],
+    status: {
+        type: String,
+        enum: [
+            "Drafted",
+            "Pending",
+            "Shipping",
+            "Received",
+            "Rejected",
+            "Deleted",
+        ],
+        default: "Drafted",
+    },
+    paidAmount: {
+        type: Number,
         required: true,
         validate: {
-            validator: mongoose_1.default.Types.ObjectId.isValid,
-            message: "Invalid product ID",
-        },
-    },
-    quantity: {
-        type: Number,
-        required: [true, "Product quantity is required"],
-        min: [1, "Quantity should be at least 1"],
-    },
-    totalPrice: {
-        type: Number,
-        required: [true, "Total price is required"],
-        validate: {
             validator: (value) => value > 0,
-            message: "Invalid Total price",
+            message: "Paid amount must be a positive number",
         },
+    },
+    txId: {
+        type: String,
+        required: true,
+        trim: true,
     },
 }, {
     timestamps: true,
-    // strict: "throw", // prevents extra fields and throw error
+    strict: "throw", // prevents extra fields and throws an error if found
 });
-//Pre-hook to validate some aspects before creating a order
+// Pre-hook to validate product availability before saving an order
 orderSchema.pre("save", function () {
     return __awaiter(this, void 0, void 0, function* () {
-        const existingProduct = yield product_model_1.ProductModel.findOne({
-            _id: this.product,
-            isDeleted: false,
-        });
-        // Validate product existence
-        if (!existingProduct)
-            throw new error_class_1.AppError(404, "Not found", "Product not found in the database");
-        const { name, quantity: stockQuantity, inStock } = existingProduct;
-        //Validate product availability: When quantity is 0 or inStock is false
-        if (stockQuantity === 0 || !inStock)
-            throw new error_class_1.AppError(410, "Stock out", `${name} is out of Stock`);
-        //Validate order quantity: When the order quantity is greater than the existing quantity
-        if (this.quantity > stockQuantity)
-            throw new error_class_1.AppError(410, "Stock out", `Insufficient stock for ${name}`);
+        // Iterate over the orderItems array
+        for (const item of this.orderItems) {
+            const existingProduct = yield product_model_1.ProductModel.findOne({
+                _id: item._id, // item._id represents the product id in our new schema
+                isDeleted: false,
+            });
+            // Validate product existence
+            if (!existingProduct) {
+                throw new error_class_1.AppError(404, "Not Found", "Product not found in the database");
+            }
+            const { name, quantity: stockQuantity, inStock } = existingProduct;
+            // Validate product availability
+            if (stockQuantity === 0 || !inStock) {
+                throw new error_class_1.AppError(410, "Stock Out", `${name} is out of stock`);
+            }
+            // Validate order quantity against available stock
+            if (item.purchaseQuantity > stockQuantity) {
+                throw new error_class_1.AppError(410, "Stock Out", `Insufficient stock for ${name}`);
+            }
+        }
     });
 });
-//post-hook to update the quantity of the product
+// Post-hook to update product stock after an order is saved
 orderSchema.post("save", function () {
     return __awaiter(this, void 0, void 0, function* () {
-        const existingProduct = yield product_model_1.ProductModel.findOne({
-            _id: this.product,
-            isDeleted: false,
-        });
-        //When no product found
-        if (!existingProduct)
-            throw new error_class_1.AppError(404, "Not Found", "Product not found in the DB");
-        const updatedFild = {
-            quantity: existingProduct.quantity - this.quantity,
-            inStock: existingProduct.quantity > this.quantity,
-        };
-        yield product_model_1.ProductModel.findByIdAndUpdate(this.product, {
-            $set: updatedFild,
-        }, {
-            new: true,
-        });
+        for (const item of this.orderItems) {
+            const existingProduct = yield product_model_1.ProductModel.findOne({
+                _id: item._id,
+                isDeleted: false,
+            });
+            // When no product is found (should rarely happen)
+            if (!existingProduct) {
+                throw new error_class_1.AppError(404, "Not Found", "Product not found in the database");
+            }
+            // Update the stock: subtract the ordered purchaseQuantity
+            const newQuantity = existingProduct.quantity - item.purchaseQuantity;
+            const updatedFields = {
+                quantity: newQuantity,
+                inStock: newQuantity > 0,
+            };
+            yield product_model_1.ProductModel.findByIdAndUpdate(item._id, { $set: updatedFields }, { new: true });
+        }
     });
 });
 exports.OrderModel = (0, mongoose_1.model)("orders", orderSchema);

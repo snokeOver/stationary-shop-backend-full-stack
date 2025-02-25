@@ -20,8 +20,10 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteAProductDB = exports.updateAProductDB = exports.getAProductDB = exports.getAllProductsDB = exports.createProductDB = void 0;
-const errorHandler_1 = require("../../errorHandler");
+exports.deleteAProductDB = exports.updateAProductDB = exports.getAProductDB = exports.getAllProductsDB = exports.countTotalProduct = exports.createProductDB = void 0;
+const QueryBuilder_1 = require("../../builder/QueryBuilder");
+const error_class_1 = require("../../utils/error.class");
+const product_constant_1 = require("./product.constant");
 const product_model_1 = require("./product.model");
 //Create a product data in the MongoDB
 const createProductDB = (product) => __awaiter(void 0, void 0, void 0, function* () {
@@ -32,23 +34,22 @@ const createProductDB = (product) => __awaiter(void 0, void 0, void 0, function*
     return restResult;
 });
 exports.createProductDB = createProductDB;
+//Get totalProduct
+const countTotalProduct = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalProduct = yield product_model_1.ProductModel.countDocuments({ isDeleted: false });
+    return totalProduct;
+});
+exports.countTotalProduct = countTotalProduct;
 //Get all products from the database
-const getAllProductsDB = (searchTerm) => __awaiter(void 0, void 0, void 0, function* () {
-    const searchQuery = searchTerm
-        ? {
-            $or: [
-                { category: { $regex: searchTerm, $options: "i" } },
-                { name: { $regex: searchTerm, $options: "i" } },
-                { brand: { $regex: searchTerm, $options: "i" } },
-            ],
-        }
-        : {};
-    const result = yield product_model_1.ProductModel.find(searchQuery)
-        .notDeleted()
-        .select("-isDeleted -__v");
-    // console.log(query.getQuery());
-    if (result.length < 1)
-        throw new errorHandler_1.NotFoundError("Resource not found");
+const getAllProductsDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const productQuery = new QueryBuilder_1.QueryBuilder(product_model_1.ProductModel.find(), query)
+        .search(product_constant_1.productSearchFields)
+        .filter()
+        .sort()
+        .paginate()
+        .selectFields();
+    const result = yield productQuery.queryModel;
+    // console.log(result);
     return result;
 });
 exports.getAllProductsDB = getAllProductsDB;
@@ -58,7 +59,7 @@ const getAProductDB = (productId) => __awaiter(void 0, void 0, void 0, function*
         .notDeleted()
         .select("-isDeleted -__v");
     if (result.length < 1)
-        throw new errorHandler_1.NotFoundError("Resource not found");
+        throw new error_class_1.AppError(404, "Not found", "Resource not found");
     return result;
 });
 exports.getAProductDB = getAProductDB;
@@ -66,16 +67,17 @@ exports.getAProductDB = getAProductDB;
 const updateAProductDB = (productId, updatedContent) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield product_model_1.ProductModel.findOneAndUpdate({ _id: productId, isDeleted: false }, { $set: updatedContent }, { runValidators: true, new: true }).select("-isDeleted -__v");
     if (!result)
-        throw new errorHandler_1.NotFoundError("Resource not found");
+        throw new error_class_1.AppError(404, "Not found", "Resource not found");
     return result;
 });
 exports.updateAProductDB = updateAProductDB;
 //Delete a single product from the database
 const deleteAProductDB = (productId) => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log(productId);
     const deleteObj = { isDeleted: true };
     const result = yield product_model_1.ProductModel.findOneAndUpdate({ _id: productId, isDeleted: false }, { $set: deleteObj }, { runValidators: true, new: true }).select("-isDeleted -__v");
     if (!result)
-        throw new errorHandler_1.NotFoundError("Resource not found");
+        throw new error_class_1.AppError(404, "Not found", "Resource not found");
     return {};
 });
 exports.deleteAProductDB = deleteAProductDB;
