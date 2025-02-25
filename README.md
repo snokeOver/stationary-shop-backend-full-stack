@@ -224,8 +224,11 @@ Copy
    MONGODB_URL=your_mongodb_connection_string
    NODE_ENV=development
    JWT_SECRET=your_jwt_secret_key
-   JWT_EXPIRES_IN=1d
-   STRIPE_SECRET_KEY=your_stripe_secret_key
+   JWT_REFRESH_SECRET=your_jwt_refresh_secret_key
+   JWT_ACCESS_EXPIRES_IN=1d
+   JWT_REFRESH_EXPIRES_IN=your_stripe_secret_key
+   SALT_ROUND=Round_of_your_salt
+   DEFAULT_PASS=default_password
 
 4. **Start the application**:
 
